@@ -1,6 +1,6 @@
 galaxy_info:
   author: w0
-  description: Install traefik
+  description: Install Traefik as a systemd service.
 
   role_name: traefik
   namespace: w0
@@ -12,5 +12,12 @@ galaxy_info:
   min_ansible_version: ">=2.10"
   galaxy_tags:
     - traefik
-    - rhel
-    - debian
+    - reverse_proxy
+    - load_balancer
+    - proxy
+    - web
+    - http
+    - https
+    - systemd
+    - service
+    - linux
