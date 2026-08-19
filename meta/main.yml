@@ -1,0 +1,16 @@
+galaxy_info:
+  author: w0
+  description: Install traefik
+
+  role_name: traefik
+  namespace: w0
+
+  # If the issue tracker for your role is not on github, uncomment the
+  # next line and provide a value
+  # issue_tracker_url: http://example.com/issue/tracker
+  license: "license(Apache-2.0)"
+  min_ansible_version: ">=2.10"
+  galaxy_tags:
+    - traefik
+    - rhel
+    - debian

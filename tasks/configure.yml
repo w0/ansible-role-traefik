@@ -1,0 +1,47 @@
+---
+- name: Configure Traefik
+  block:
+    - name: Check traefik.yml already exists
+      ansible.builtin.stat:
+        path: /etc/traefik/traefik.yml
+      register: traefikconfig_state
+
+    - name: Ensure Traefik conf directory exists
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+      loop:
+        - /etc/traefik
+        - /etc/traefik/conf.d
+      when: not traefikconfig_state.stat.exists
+
+    - name: Copy default Traefik config
+      ansible.builtin.template:
+        src: traefik.j2
+        dest: "/etc/traefik/traefik.yml"
+        owner: traefik
+        group: traefik
+        mode: "0600"
+      when: not traefikconfig_state.stat.exists
+      notify: Restart Traefik service
+
+- name: Copy Traefik systemd unit file
+  ansible.builtin.template:
+    src: service.j2
+    dest: "/etc/systemd/system/{{ traefik_service_name }}.service"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Daemon-reload Traefik service
+  ansible.builtin.systemd:
+    daemon_reload: true
+    name: "{{ traefik_service_name }}"
+
+- name: Enable Treafik service on boot
+  ansible.builtin.systemd:
+    name: "{{ traefik_service_name }}"
+    enabled: true

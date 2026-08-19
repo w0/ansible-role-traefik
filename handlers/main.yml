@@ -1,0 +1,5 @@
+---
+- name: Restart Traefik service
+  ansible.builtin.systemd:
+    name: "{{ traefik_service_name }}"
+    state: restarted

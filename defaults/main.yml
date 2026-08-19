@@ -1,0 +1,10 @@
+---
+traefik_version: "v3.7.11"
+traefik_service_name: "traefik"
+
+traefik_repo_url: "https://github.com/traefik/traefik"
+
+traefik_system_user: "traefik"
+traefik_system_group: "traefik"
+traefik_bin_dir: "/usr/local/bin"
+traefik_log_dir: "/var/log/traefik"

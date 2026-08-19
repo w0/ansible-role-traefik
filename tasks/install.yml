@@ -1,0 +1,88 @@
+---
+- name: Create traefik system group
+  ansible.builtin.group:
+    name: "{{ traefik_system_group }}"
+    state: present
+    system: true
+  when: traefik_system_group != "root"
+
+- name: Create traefik system user
+  ansible.builtin.user:
+    name: "{{ traefik_system_user }}"
+    groups: "{{ traefik_system_group }}"
+    append: true
+    shell: /usr/sbin/nologin
+    system: true
+    create_home: false
+  when: traefik_system_user != "root"
+
+- name: Ensure bin directory exists
+  ansible.builtin.file:
+    path: "{{ traefik_bin_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Ensure log directory exists
+  ansible.builtin.file:
+    path: "{{ traefik_log_dir }}"
+    state: directory
+    owner: "{{ traefik_system_user }}"
+    group: "{{ traefik_system_group }}"
+    mode: "0750"
+
+- name: Install to target host
+  block:
+    - name: Create download directory
+      ansible.builtin.file:
+        path: /tmp/traefik-bin/
+        state: directory
+        mode: "0755"
+      when:
+        - not ansible_check_mode
+
+    - name: Download and unarchive traefik release binary
+      ansible.builtin.unarchive:
+        src: "{{ traefik_repo_url }}/releases/download/{{ traefik_version }}/traefik_{{ traefik_version }}_linux_{{ go_arch }}.tar.gz"
+        dest: /tmp/traefik-bin/
+        remote_src: true
+        extra_opts:
+          - --no-same-owner
+      register: archive_download
+      when:
+        - not ansible_check_mode
+        - not traefik_is_installed.stat.exists or
+          traefik_version not in traefik_current_version.stdout
+
+    - name: Copy treafik release binary
+      ansible.builtin.copy:
+        src: /tmp/traefik-bin/traefik
+        dest: "{{ traefik_bin_dir }}/traefik"
+        mode: "0755"
+        owner: root
+        group: "root"
+        remote_src: true
+      when: archive_download is changed
+      notify: Restart Traefik service
+
+  always:
+    - name: Clear download file
+      ansible.builtin.file:
+        path: /tmp/traefik-bin/
+        state: absent
+      when:
+        - not ansible_check_mode
+
+- name: Restore SELinux context for traefik binary
+  ansible.builtin.command:
+    argv:
+      - restorecon
+      - -v
+      - "{{ traefik_bin_dir }}/traefik"
+  register: restorecon_result
+  changed_when: "'relabeled' in restorecon_result.stdout"
+  when:
+    - ansible_facts['selinux'] is defined
+    - ansible_facts['selinux'].status == "enabled"
+    - not ansible_check_mode
