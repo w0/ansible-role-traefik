@@ -9,8 +9,7 @@
 - name: Create traefik system user
   ansible.builtin.user:
     name: "{{ traefik_system_user }}"
-    groups: "{{ traefik_system_group }}"
-    append: true
+    group: "{{ traefik_system_group }}"
     shell: /usr/sbin/nologin
     system: true
     create_home: false
